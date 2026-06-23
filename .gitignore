@@ -1,0 +1,8 @@
+.env
+.env.*
+!.env.example
+node_modules/
+npm-debug.log*
+logs/
+_lgu_spec/
+_lgu_spec_text/
