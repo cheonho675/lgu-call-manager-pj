@@ -18,6 +18,32 @@ export function maskPhone(value) {
   return `${digits.slice(0, 3)}****${digits.slice(-4)}`;
 }
 
+export function sanitizeUrl(value) {
+  if (!value) {
+    return value;
+  }
+
+  try {
+    const url = new URL(String(value), 'http://local');
+    for (const key of [...url.searchParams.keys()]) {
+      const lowered = key.toLowerCase();
+      if (
+        lowered.includes('secret') ||
+        lowered.includes('token') ||
+        lowered === 'pass' ||
+        lowered === 'passwd' ||
+        lowered === 'password'
+      ) {
+        url.searchParams.set(key, 'redacted');
+      }
+    }
+
+    return `${url.pathname}${url.search}`;
+  } catch {
+    return String(value).replace(/([?&](?:secret|token|pass|passwd|password)=)[^&]*/gi, '$1redacted');
+  }
+}
+
 function safeDetails(details = {}) {
   const blockedKeys = new Set([
     'pass',
@@ -35,6 +61,11 @@ function safeDetails(details = {}) {
     const lowered = key.toLowerCase();
     if ([...blockedKeys].some((blocked) => lowered.includes(blocked))) {
       output[key] = '[redacted]';
+      continue;
+    }
+
+    if (lowered === 'url' || lowered.endsWith('_url')) {
+      output[key] = sanitizeUrl(value);
       continue;
     }
 
